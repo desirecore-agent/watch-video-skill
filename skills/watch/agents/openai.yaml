@@ -1,0 +1,4 @@
+interface:
+  display_name: "Watch Video"
+  short_description: "Analyze video audio and scene changes"
+  default_prompt: "Use $watch to analyze this video, including what appears on screen."

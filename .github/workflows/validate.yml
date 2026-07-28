@@ -1,0 +1,26 @@
+name: Validate
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Validate public package
+        run: python3 scripts/validate_public.py
+
+      - name: Test installer
+        run: |
+          install_root="$(mktemp -d)"
+          ./scripts/install.sh --destination "$install_root/watch"
+          test -f "$install_root/watch/SKILL.md"
+          "$install_root/watch/scripts/prepare_video.sh" --help

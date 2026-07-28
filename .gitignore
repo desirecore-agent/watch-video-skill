@@ -1,0 +1,13 @@
+.DS_Store
+__pycache__/
+*.py[cod]
+.venv/
+watch-work/
+video.*
+audio.*
+transcript.srt
+frames/
+frames-selected/
+scenes.log
+scene_index.csv
+manifest.txt
