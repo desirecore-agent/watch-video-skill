@@ -17,6 +17,12 @@ runtime compatibility are welcome.
 
 6. Test installer changes with a temporary home directory.
 
+7. Run the scene-index unit tests:
+
+   ```bash
+   python3 -m unittest discover -s tests -p 'test_*.py'
+   ```
+
 Use synthetic or freely redistributable media fixtures in tests. Describe the
 platform, runtime, command, expected behavior, and actual behavior in bug
 reports without including sensitive content.

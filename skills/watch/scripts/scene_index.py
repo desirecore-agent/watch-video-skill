@@ -65,6 +65,10 @@ def main() -> int:
         target = args.selected / f"frame_{selected_number:06d}.png"
         shutil.copy2(source, target)
         seconds = timestamps[frame_index] if frame_index < len(timestamps) else None
+        # A fallback frame is extracted when no scene-change log exists. In that
+        # case the first frame represents the start of the media.
+        if seconds is None and not timestamps and frame_index == 0:
+            seconds = 0.0
         rows.append(
             {
                 "selected_frame": target.name,
