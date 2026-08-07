@@ -7,6 +7,11 @@ demos, editing, and other details that never appear in a transcript.
 It supports public YouTube, Loom, Zoom-share, and direct media URLs handled by
 `yt-dlp`, plus local video files.
 
+The package is runtime-neutral and does not bundle `yt-dlp`, `ffmpeg`, Whisper,
+video files, cookies, or transcripts. DesireCore installs the `watch` skill
+from `skills/watch/`; the same source also supports Claude Code and custom
+skill destinations.
+
 ## Why use it
 
 Transcript-only summaries miss visual evidence. This skill:
@@ -144,8 +149,15 @@ python3 scripts/validate_public.py
 ```
 
 The validation checks skill structure, scripts, required files, and common
-secret or personal-path patterns. CI runs the same check on every push and pull
-request.
+secret or personal-path patterns. It also verifies that URL downloads cannot
+expand a playlist unexpectedly. CI runs the same check and the scene-index unit
+tests on every push and pull request.
+
+Run the unit tests directly with:
+
+```bash
+python3 -m unittest discover -s tests -p 'test_*.py'
+```
 
 ## Contributing
 

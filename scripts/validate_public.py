@@ -12,6 +12,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 REQUIRED_FILES = [
     ROOT / "README.md",
+    ROOT / "README.zh-CN.md",
     ROOT / "LICENSE",
     ROOT / "SECURITY.md",
     ROOT / "CONTRIBUTING.md",
@@ -20,6 +21,7 @@ REQUIRED_FILES = [
     ROOT / "skills/watch/scripts/check_dependencies.sh",
     ROOT / "skills/watch/scripts/prepare_video.sh",
     ROOT / "skills/watch/scripts/scene_index.py",
+    ROOT / "tests/test_scene_index.py",
 ]
 TEXT_SUFFIXES = {
     "",
@@ -83,8 +85,24 @@ def check_skill_frontmatter(errors: list[str]) -> None:
         for line in frontmatter.splitlines()
         if line and not line[0].isspace() and ":" in line
     ]
-    if keys != ["name", "description"]:
-        errors.append("SKILL.md frontmatter must contain only name and description")
+    if keys[:2] != ["name", "description"]:
+        errors.append("SKILL.md frontmatter must start with name and description")
+    allowed_keys = {
+        "name",
+        "description",
+        "version",
+        "type",
+        "risk_level",
+        "status",
+        "disable-model-invocation",
+        "tags",
+        "requires",
+        "metadata",
+        "market",
+    }
+    unknown_keys = sorted(set(keys) - allowed_keys)
+    if unknown_keys:
+        errors.append(f"SKILL.md frontmatter has unsupported top-level keys: {', '.join(unknown_keys)}")
     if not re.search(r"^name:\s*watch\s*$", frontmatter, re.MULTILINE):
         errors.append("SKILL.md name must be watch")
     if "[TODO" in content:
@@ -123,6 +141,15 @@ def check_shell_syntax(errors: list[str]) -> None:
             errors.append(f"{path.relative_to(ROOT)}: {result.stderr.strip()}")
 
 
+def check_video_scope_guard(errors: list[str]) -> None:
+    path = ROOT / "skills/watch/scripts/prepare_video.sh"
+    if not path.is_file():
+        return
+    content = path.read_text(encoding="utf-8")
+    if content.count("--no-playlist") < 2:
+        errors.append("prepare_video.sh must pass --no-playlist to every yt-dlp invocation")
+
+
 def check_symlinks(errors: list[str]) -> None:
     for path in ROOT.rglob("*"):
         if ".git" not in path.parts and path.is_symlink():
@@ -136,6 +163,7 @@ def main() -> int:
     check_interface(errors)
     check_hygiene(errors)
     check_shell_syntax(errors)
+    check_video_scope_guard(errors)
     check_symlinks(errors)
 
     if errors:

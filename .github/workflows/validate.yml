@@ -18,6 +18,9 @@ jobs:
       - name: Validate public package
         run: python3 scripts/validate_public.py
 
+      - name: Run scene-index tests
+        run: python3 -m unittest discover -s tests -p 'test_*.py'
+
       - name: Test installer
         run: |
           install_root="$(mktemp -d)"

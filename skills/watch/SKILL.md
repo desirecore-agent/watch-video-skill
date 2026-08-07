@@ -1,12 +1,61 @@
 ---
 name: watch
-description: >
+description: >-
   Analyze videos from YouTube, Loom, Zoom recordings, direct media URLs, or local
   files by combining timestamped subtitles or Whisper transcription with
   scene-change frame extraction. Use when a user invokes /watch, asks to watch,
   summarize, transcribe, or review a video, or needs details that appear on
   screen but are absent from the audio. Also triggers for Russian requests such
   as "посмотри видео", "разбери ролик", and "что показано на экране".
+version: 1.1.0
+type: procedural
+risk_level: medium
+status: enabled
+disable-model-invocation: true
+tags:
+  - media
+  - video
+  - transcription
+  - scene-analysis
+  - yt-dlp
+  - ffmpeg
+requires:
+  tools:
+    - Bash
+  connections:
+    - internet
+metadata:
+  author: DesireCore Agent
+  updated_at: '2026-08-07'
+  i18n:
+    default_locale: en-US
+    source_locale: en-US
+    locales:
+      - zh-CN
+      - en-US
+    zh-CN:
+      name: 视频观看与场景分析
+      short_desc: 结合字幕、Whisper 与场景变化帧分析视频中的语音和画面
+      description: >-
+        通过字幕或 Whisper 转写、场景变化帧和时间戳索引，同时分析视频的音频与画面；适用于视频总结、演示复盘、幻灯片/界面/代码审阅，以及发现音频没有说明的屏幕信息。
+      body: ./SKILL.zh-CN.md
+      translated_by: human
+    en-US:
+      name: Watch Video
+      short_desc: Analyze video speech and scene changes together
+      description: >-
+        Combine subtitles or Whisper transcription with scene-change frames and timestamp indexing to analyze both what a video says and what it shows.
+      body: ./SKILL.md
+      translated_by: human
+market:
+  icon: >-
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" stroke="#2563EB" stroke-width="1.7"/><path d="m10 9 5 3-5 3V9Z" fill="#2563EB"/><path d="M3 17h18" stroke="#2563EB" stroke-width="1.7" stroke-linecap="round"/><path d="M7 3v2m10-2v2" stroke="#2563EB" stroke-width="1.7" stroke-linecap="round"/></svg>
+  short_desc: Analyze video speech and scene changes together
+  category: media
+  channel: latest
+  maintainer:
+    name: DesireCore Agent
+    verified: true
 ---
 
 # Watch video

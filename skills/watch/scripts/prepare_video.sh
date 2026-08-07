@@ -129,6 +129,7 @@ video_path=""
 if [ -n "$input_url" ]; then
   printf 'Attempting subtitles...\n'
   if yt-dlp \
+    --no-playlist \
     --write-subs \
     --write-auto-subs \
     --sub-langs "$languages" \
@@ -151,6 +152,7 @@ if [ -n "$input_url" ]; then
 
   printf 'Downloading video...\n'
   yt-dlp \
+    --no-playlist \
     -f "bv*[height<=720]+ba/b[height<=720]" \
     --merge-output-format mp4 \
     -o "$work_dir/video.%(ext)s" \
