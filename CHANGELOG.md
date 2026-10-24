@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.1.2 — 2026-10-24
+
+- Removed `yt-dlp` from `requires.bins`. Runtimes such as DesireCore treat every program in that list as required for all inputs, so a missing `yt-dlp` made the whole skill look unusable even for local files, which only need `ffmpeg`, `ffprobe`, and `python3`. URL inputs still need `yt-dlp`; `scripts/check_dependencies.sh --url` reports it when it is missing.
+
+中文：
+
+- 从 `requires.bins` 中移除 `yt-dlp`。DesireCore 等运行环境会把该列表里的每个程序都当作所有输入的必需项，缺少 `yt-dlp` 时整个技能都会被判为不可用，但本地文件只需要 `ffmpeg`、`ffprobe` 和 `python3`。URL 输入仍然需要 `yt-dlp`，缺少时由 `scripts/check_dependencies.sh --url` 报告。
+
 ## 1.1.1 — 2026-10-18
 
 - Declared the required command-line programs (`yt-dlp`, `ffmpeg`, `ffprobe`, `python3`) in `requires.bins`, so runtimes that read the declaration can report missing programs before the scripts fail. The optional Whisper fallback stays undeclared.
