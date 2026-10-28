@@ -28,7 +28,8 @@ Transcript-only summaries miss visual evidence. This skill:
 - macOS, Linux, or Windows through WSL
 - Bash 3.2 or newer
 - Python 3.9 or newer
-- [`yt-dlp`](https://github.com/yt-dlp/yt-dlp) for URL inputs
+- [`yt-dlp`](https://github.com/yt-dlp/yt-dlp) for URL inputs, plus
+  [`deno`](https://deno.com/) (recommended) for full YouTube support
 - [`ffmpeg`](https://ffmpeg.org/) and `ffprobe`
 - [`openai-whisper`](https://github.com/openai/whisper) for optional
   transcription fallback
@@ -77,8 +78,9 @@ brew install yt-dlp ffmpeg python
 python3 -m pip install --user openai-whisper
 ```
 
-Use your operating system's official packages where possible. Review commands
-before installing software.
+When a command is missing, the check prints an install command for the current
+platform. Use your operating system's official packages where possible. Review
+commands before installing software.
 
 ## Use
 

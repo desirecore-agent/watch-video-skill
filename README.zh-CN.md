@@ -21,7 +21,7 @@
 
 - macOS、Linux，或通过 WSL 使用 Windows
 - Bash 3.2 或更高版本
-- URL 输入需要 [`yt-dlp`](https://github.com/yt-dlp/yt-dlp)
+- URL 输入需要 [`yt-dlp`](https://github.com/yt-dlp/yt-dlp)；完整支持 YouTube 还推荐安装 [`deno`](https://deno.com/)
 - `ffmpeg` 和 `ffprobe`
 - 可选的 [`openai-whisper`](https://github.com/openai/whisper)，用于没有可用字幕时的转写回退
 - 能检查提取帧的视觉 Agent 运行时
@@ -67,7 +67,7 @@ brew install yt-dlp ffmpeg python
 python3 -m pip install --user openai-whisper
 ```
 
-尽可能使用操作系统的官方软件包，并在安装前检查命令。
+缺少命令时，检查脚本会给出适合当前平台的安装命令。尽可能使用操作系统的官方软件包，并在安装前检查命令。
 
 ## 使用
 
