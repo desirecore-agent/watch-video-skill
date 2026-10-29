@@ -7,7 +7,7 @@ description: >-
   summarize, transcribe, or review a video, or needs details that appear on
   screen but are absent from the audio. Also triggers for Russian requests such
   as "посмотри видео", "разбери ролик", and "что показано на экране".
-version: 1.1.2
+version: 1.1.3
 type: procedural
 risk_level: medium
 status: enabled
@@ -30,7 +30,7 @@ requires:
     - python3
 metadata:
   author: DesireCore Agent
-  updated_at: '2026-10-24'
+  updated_at: '2026-10-28'
   i18n:
     default_locale: en-US
     source_locale: en-US
@@ -89,19 +89,33 @@ instead of attempting to bypass the restriction.
 
 ### 2. Check dependencies
 
-From this skill directory, run:
+Always run the check before preparing media. From this skill directory, run:
 
 ```bash
 scripts/check_dependencies.sh --url
 ```
 
-Use `--local` for local files. `yt-dlp`, `ffmpeg`, `ffprobe`, and `python3` are
-required for URL inputs. The `whisper` CLI is an optional fallback when usable
-subtitles are unavailable.
+Use `--local` for local files. `ffmpeg`, `ffprobe`, and `python3` are required
+for every input. URL inputs also require `yt-dlp`, which downloads the subtitles
+and the video. It is deliberately absent from `requires.bins` because local
+files do not need it, so a runtime that reads that list will not warn you that
+it is missing; this check is the only place it is detected. For YouTube URLs,
+`deno` is recommended: without a JavaScript runtime, yt-dlp has limited YouTube
+support. The `whisper` CLI is an optional fallback when usable subtitles are
+unavailable.
 
-If a dependency is missing, report the exact missing command and offer the
-platform-appropriate installation command. Never install software without the
-user's approval.
+When the check reports a required command as missing:
+
+1. Tell the user which command is missing and what it is needed for.
+2. Propose the install command the check prints for this platform and ask for
+   approval. Never install software without the user's approval.
+3. After approval, run the command, then run the check again. If the command
+   is still reported missing, its install location may not be on this
+   process's `PATH`; ask the user to confirm the location or restart the
+   client instead of claiming it is not installed.
+4. If the user declines or the installation fails, do not continue with the
+   URL. Offer to analyze an authorized local copy instead, which does not need
+   `yt-dlp`.
 
 ### 3. Prepare the media
 
@@ -136,9 +150,10 @@ The script prints the working directory and writes:
 - `scene_index.csv` mapping frames to timestamps;
 - `manifest.txt` with preparation status.
 
-If the script cannot download a supported URL, explain the platform limitation
-and ask for an authorized local file. Do not invent a transcript or visual
-observations.
+If the script stops at the dependency check, return to step 2; a missing
+program is not a platform limitation. If the script cannot download a supported
+URL, explain the platform limitation and ask for an authorized local file. Do
+not invent a transcript or visual observations.
 
 ### 4. Analyze audio and visuals
 
