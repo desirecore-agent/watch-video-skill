@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.1.4 — 2026-10-30
+
+- Removed `internet` from `requires.connections`. That field names credentials to inject into script environments; it does not mean the skill needs network access. DesireCore looked up a credential called `internet` on every Bash call, found none, and appended a "credential not injected" notice to the command output, which led agents to report a missing network credential. The skill needs no credentials, and URL inputs still reach the network through `yt-dlp`.
+
+中文：
+
+- 从 `requires.connections` 中移除 `internet`。该字段声明的是要注入脚本环境的凭据，并不表示技能需要联网。DesireCore 每次执行 Bash 都会查找名为 `internet` 的凭据，查不到就在命令输出后追加「连接凭据未注入」的提示，Agent 因此误报缺少网络凭据。本技能不需要任何凭据，URL 输入仍由 `yt-dlp` 联网下载。
+
 ## 1.1.3 — 2026-10-28
 
 - The skill body now tells the agent how to handle a missing dependency: always run the check before preparing media, explain what the missing command is for, propose the install command and ask for approval, install after approval and re-run the check, and fall back to an authorized local copy if the user declines or installation fails. It also states that `yt-dlp` is not in `requires.bins`, so runtimes that read that list do not warn about it and the check is the only place it is detected.
