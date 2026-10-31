@@ -7,7 +7,7 @@ description: >-
   summarize, transcribe, or review a video, or needs details that appear on
   screen but are absent from the audio. Also triggers for Russian requests such
   as "посмотри видео", "разбери ролик", and "что показано на экране".
-version: 1.1.3
+version: 1.1.4
 type: procedural
 risk_level: medium
 status: enabled
@@ -22,15 +22,13 @@ tags:
 requires:
   tools:
     - Bash
-  connections:
-    - internet
   bins:
     - ffmpeg
     - ffprobe
     - python3
 metadata:
   author: DesireCore Agent
-  updated_at: '2026-10-28'
+  updated_at: '2026-10-30'
   i18n:
     default_locale: en-US
     source_locale: en-US
