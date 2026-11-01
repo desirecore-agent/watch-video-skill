@@ -78,6 +78,7 @@ scripts/prepare_video.sh --input "/absolute/path/video.mp4" --workdir "$work_dir
 状态为 `unavailable`、`TranscribeAudio` 可用，且用户没有要求媒体留在本机时，调用它，`path` 取脚本打印的 `Media file`：
 
 - 工具会把音频发送到用户选定为默认模型的语音识别服务（可能在云端），结果首行写明实际目的地。用户的选定已经涵盖这一点，不需要再次确认。
+- 语音识别服务不属于本技能，由用户另行配置，条款和费用以服务商为准。
 - 每行转写以时间戳开头，从文件开头算起：`[mm:ss]`，超过一小时为 `[h:mm:ss]`。
 - `language` 可取 `auto`、`zh` 或 `en`，缺省自动识别。
 - `start_sec` 和 `end_sec` 把一次调用限定在一个区间。用户只关心视频的一部分时，或工具报告文件超过单次上限时使用。
@@ -90,7 +91,7 @@ scripts/prepare_video.sh --input "MEDIA_FILE" --workdir "$work_dir"
 
 没有 `whisper` 时，继续做纯视觉审阅。
 
-`TranscribeAudio` 不可用或用户要求媒体留在本机时，脚本已经尝试过 Whisper。仍然没有转写时，继续做纯视觉审阅，并告诉用户要得到转写需要什么：在运行环境里配置默认语音识别模型，或在本机安装 Whisper。
+`TranscribeAudio` 不可用或用户要求媒体留在本机时，脚本已经尝试过 Whisper。仍然没有转写时，继续做纯视觉审阅，并告诉用户要得到转写需要什么：在运行环境里配置默认语音识别模型，或在本机安装 Whisper。没有转写时，在报告里说明，不要猜测视频里说了什么。
 
 ### 5. 分析音频与画面
 
