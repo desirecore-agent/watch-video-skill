@@ -16,7 +16,9 @@ skill destinations.
 
 Transcript-only summaries miss visual evidence. This skill:
 
-- prefers existing subtitles, then falls back to local Whisper transcription;
+- prefers existing subtitles, then transcribes speech with the runtime's
+  `TranscribeAudio` tool when it has one (DesireCore), and otherwise falls back to
+  local Whisper;
 - extracts frames when scenes change instead of sampling on a fixed timer;
 - creates a timestamp index for matching frames to speech;
 - caps the visual review set without losing the beginning or end;
@@ -32,10 +34,11 @@ Transcript-only summaries miss visual evidence. This skill:
   [`deno`](https://deno.com/) (recommended) for full YouTube support
 - [`ffmpeg`](https://ffmpeg.org/) and `ffprobe`
 - [`openai-whisper`](https://github.com/openai/whisper) for optional
-  transcription fallback
+  transcription fallback on runtimes without a speech transcription tool
 - a vision-capable agent runtime for reviewing the extracted frames
 
-Whisper is optional when the source has usable subtitles.
+Whisper is not needed when the source has usable subtitles or the runtime
+provides `TranscribeAudio`.
 
 ## Install
 
@@ -135,7 +138,9 @@ Run `skills/watch/scripts/prepare_video.sh --help` for tuning options.
 - Do not use this project to bypass logins, DRM, paywalls, or platform rules.
 - Downloads, frames, and transcripts stay local in the selected working
   directory.
-- The scripts do not upload media or analytics.
+- The scripts do not upload media or analytics. When the agent uses
+  `TranscribeAudio`, the runtime sends the audio to the speech recognition service
+  the user selected and names that service in the result.
 - Review temporary files before deleting or retaining them.
 - Do not attach private videos, transcripts, cookies, or tokens to public bug
   reports.

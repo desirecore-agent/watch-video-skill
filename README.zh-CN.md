@@ -10,7 +10,7 @@
 
 只做转写会遗漏画面证据。本 Skill 会：
 
-- 优先使用现有字幕，没有可用字幕时回退到本地 Whisper 转写；
+- 优先使用现有字幕；没有可用字幕时，用运行环境的 `TranscribeAudio` 工具转写语音（DesireCore 提供），没有该工具时回退到本地 Whisper；
 - 按场景变化提取帧，而不是只按固定时间采样；
 - 创建帧与语音时间戳的索引；
 - 限制最终审阅帧数，同时保留视频开头和结尾；
@@ -23,10 +23,10 @@
 - Bash 3.2 或更高版本
 - URL 输入需要 [`yt-dlp`](https://github.com/yt-dlp/yt-dlp)；完整支持 YouTube 还推荐安装 [`deno`](https://deno.com/)
 - `ffmpeg` 和 `ffprobe`
-- 可选的 [`openai-whisper`](https://github.com/openai/whisper)，用于没有可用字幕时的转写回退
+- 可选的 [`openai-whisper`](https://github.com/openai/whisper)，运行环境没有语音转写工具时用作转写回退
 - 能检查提取帧的视觉 Agent 运行时
 
-字幕可用时不需要 Whisper。
+字幕可用或运行环境提供 `TranscribeAudio` 时不需要 Whisper。
 
 ## 安装
 
@@ -120,7 +120,7 @@ skills/watch/scripts/prepare_video.sh \
 - 只处理用户有权访问的视频。
 - 不得绕过登录、DRM、付费墙或平台规则。
 - 下载文件、帧图和转写文本保留在指定的本地工作目录中。
-- 脚本不会上传媒体或分析数据。
+- 脚本不会上传媒体或分析数据。Agent 使用 `TranscribeAudio` 时，运行环境会把音频发送到用户选定的语音识别服务，并在结果中写明该服务。
 - 删除或保留临时文件前先进行检查。
 - 不要在公开 Issue 中附带私有视频、转写文本、Cookie 或 Token。
 
