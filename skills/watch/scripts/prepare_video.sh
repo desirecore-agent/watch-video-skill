@@ -10,6 +10,7 @@ scene_threshold="0.30"
 max_frames="150"
 whisper_model="small"
 whisper_language="auto"
+skip_whisper="false"
 
 usage() {
   cat <<'EOF'
@@ -24,7 +25,18 @@ Options:
   --max-frames NUMBER        Maximum selected frames (default: 150)
   --whisper-model NAME       Whisper fallback model (default: small)
   --whisper-language CODE    Language code or auto (default: auto)
+  --skip-whisper             Leave a missing transcript to the runtime's
+                             TranscribeAudio tool instead of running Whisper
 EOF
+}
+
+# File tools outside this shell cannot open MSYS paths such as /tmp/... on Windows.
+native_path() {
+  if command -v cygpath >/dev/null 2>&1; then
+    cygpath -w "$1"
+  else
+    printf '%s\n' "$1"
+  fi
 }
 
 require_value() {
@@ -75,6 +87,9 @@ while [ "$#" -gt 0 ]; do
       require_value "$@"
       whisper_language="$2"
       shift
+      ;;
+    --skip-whisper)
+      skip_whisper="true"
       ;;
     -h|--help)
       usage
@@ -174,7 +189,9 @@ if [ -z "$video_path" ]; then
 fi
 
 if [ "$transcript_status" = "unavailable" ]; then
-  if command -v whisper >/dev/null 2>&1; then
+  if [ "$skip_whisper" = "true" ]; then
+    printf 'No subtitles found; leaving transcription to the runtime.\n'
+  elif command -v whisper >/dev/null 2>&1; then
     if ffprobe \
       -v error \
       -select_streams a:0 \
@@ -261,12 +278,13 @@ python3 "$script_dir/scene_index.py" \
 
 {
   printf 'transcript=%s\n' "$transcript_status"
-  printf 'video=%s\n' "$video_path"
+  printf 'video=%s\n' "$(native_path "$video_path")"
   printf 'scene_threshold=%s\n' "$scene_threshold"
   printf 'max_frames=%s\n' "$max_frames"
 } > "$work_dir/manifest.txt"
 
-printf '\nPrepared video in: %s\n' "$work_dir"
+printf '\nPrepared video in: %s\n' "$(native_path "$work_dir")"
+printf 'Media file: %s\n' "$(native_path "$video_path")"
 printf 'Transcript status: %s\n' "$transcript_status"
-printf 'Review frames: %s\n' "$work_dir/frames-selected"
-printf 'Timestamp index: %s\n' "$work_dir/scene_index.csv"
+printf 'Review frames: %s\n' "$(native_path "$work_dir/frames-selected")"
+printf 'Timestamp index: %s\n' "$(native_path "$work_dir/scene_index.csv")"

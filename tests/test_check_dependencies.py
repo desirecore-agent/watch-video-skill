@@ -18,9 +18,19 @@ BASH = shutil.which("bash") or "/bin/bash"
 class CheckDependenciesTests(unittest.TestCase):
     """Runs the scripts with a PATH that holds only stub commands."""
 
-    def make_path(self, commands: list[str], system: str = "Darwin", tools: list[str] | None = None) -> str:
+    def make_path(
+        self,
+        commands: list[str],
+        system: str = "Darwin",
+        tools: list[str] | None = None,
+        scripts: dict[str, str] | None = None,
+    ) -> str:
         bin_dir = Path(tempfile.mkdtemp())
         self.addCleanup(shutil.rmtree, bin_dir)
+        for name, body in (scripts or {}).items():
+            stub = bin_dir / name
+            stub.write_text(f"#!/bin/sh\n{body}\n", encoding="utf-8")
+            stub.chmod(0o755)
         for name in commands:
             stub = bin_dir / name
             stub.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
@@ -89,6 +99,57 @@ class CheckDependenciesTests(unittest.TestCase):
         self.assertEqual(result.returncode, 1)
         self.assertIn("missing  yt-dlp (required)", result.stdout)
         self.assertNotIn("Attempting subtitles", result.stdout)
+
+    def test_missing_whisper_is_optional_and_names_the_transcription_tool(self) -> None:
+        path = self.make_path(["ffmpeg", "ffprobe", "python3"])
+        result = self.run_script(CHECK, ["--local"], path)
+        self.assertEqual(result.returncode, 0)
+        self.assertIn("missing  whisper (optional)", result.stdout)
+        self.assertIn("no TranscribeAudio tool", result.stdout)
+
+    def prepare_local_video(self, args: list[str], scripts: dict[str, str]) -> tuple[subprocess.CompletedProcess[str], str]:
+        """Prepares a local file with stub media tools and returns the manifest text."""
+        path = self.make_path(
+            ["ffmpeg", "python3"],
+            tools=["bash", "dirname", "mkdir", "find", "grep", "cp"],
+            scripts={"ffprobe": "echo 0", **scripts},
+        )
+        with tempfile.TemporaryDirectory() as work_dir:
+            video = Path(work_dir) / "input.mp4"
+            video.write_bytes(b"video")
+            result = self.run_script(PREPARE, ["--input", str(video), "--workdir", work_dir, *args], path)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            return result, (Path(work_dir) / "manifest.txt").read_text(encoding="utf-8")
+
+    WHISPER_WRITES_SRT = (
+        'while [ "$#" -gt 0 ]; do [ "$1" = "--output_dir" ] && : > "$2/audio.srt"; shift; done'
+    )
+
+    def test_prepare_runs_whisper_by_default_when_subtitles_are_missing(self) -> None:
+        result, manifest = self.prepare_local_video([], {"whisper": self.WHISPER_WRITES_SRT})
+        self.assertIn("running Whisper fallback", result.stdout)
+        self.assertIn("Transcript status: whisper", result.stdout)
+        self.assertIn("transcript=whisper", manifest)
+
+    def test_skip_whisper_leaves_transcription_to_the_runtime(self) -> None:
+        result, manifest = self.prepare_local_video(["--skip-whisper"], {"whisper": self.WHISPER_WRITES_SRT})
+        self.assertNotIn("running Whisper fallback", result.stdout)
+        self.assertIn("leaving transcription to the runtime", result.stdout)
+        self.assertIn("Transcript status: unavailable", result.stdout)
+        self.assertIn("transcript=unavailable", manifest)
+
+    def test_prepare_prints_the_media_file_for_the_transcription_tool(self) -> None:
+        result, manifest = self.prepare_local_video(["--skip-whisper"], {})
+        media_lines = [line for line in result.stdout.splitlines() if line.startswith("Media file: ")]
+        self.assertEqual(len(media_lines), 1)
+        self.assertTrue(media_lines[0].endswith("input.mp4"))
+        self.assertIn(f"video={media_lines[0].removeprefix('Media file: ')}", manifest)
+
+    def test_prepare_prints_native_paths_when_cygpath_exists(self) -> None:
+        result, manifest = self.prepare_local_video(["--skip-whisper"], {"cygpath": "printf 'C:\\\\win%s\\n' \"$2\""})
+        for label in ("Prepared video in", "Media file", "Review frames", "Timestamp index"):
+            self.assertRegex(result.stdout, rf"(?m)^{label}: C:\\win/")
+        self.assertRegex(manifest, r"(?m)^video=C:\\win/")
 
 
 if __name__ == "__main__":

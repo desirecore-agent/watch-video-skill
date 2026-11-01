@@ -156,7 +156,7 @@ if [ "$mode" = "url" ]; then
 fi
 
 if [ -n "$missing_optional" ]; then
-  printf '\nWhisper is only needed when subtitles are unavailable.\n'
+  printf '\nWhisper is only needed when subtitles are unavailable and the runtime has no TranscribeAudio tool.\n'
 fi
 
 if [ -n "$missing_required" ]; then

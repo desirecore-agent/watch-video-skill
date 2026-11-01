@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.2.0 — 2026-11-01
+
+- When there are no subtitles, the skill now transcribes speech with the runtime's `TranscribeAudio` tool. The agent loads it with `DiscoverTools` when it is not already declared. Most users do not have the `whisper` CLI, so without this the agent could only read text visible in the frames. The tool sends the audio to the speech recognition service the user selected and names that destination on the first line of its result; the skill body and the README now say so, and the report repeats it.
+- `whisper` is now the last resort: it runs when the tool is unavailable, when the user asked to keep the media on this machine, or after the tool fails.
+- Added `--skip-whisper` to `scripts/prepare_video.sh`, so a locally installed Whisper does not run before the tool. Without the flag the script behaves as before, which keeps runtimes without the tool working.
+- `scripts/prepare_video.sh` now prints the `Media file` path. Under Git Bash on Windows, the paths it prints and the manifest's `video` entry use native form from `cygpath -w`, because file tools outside the shell cannot open MSYS paths such as `/tmp/...`.
+
+中文：
+
+- 没有字幕时，技能改为用运行环境的 `TranscribeAudio` 工具转写语音；工具未声明时，Agent 通过 `DiscoverTools` 加载。多数用户没有安装 `whisper` 命令行，此前 Agent 只能读取画面里能看到的文字。工具会把音频发送到用户选定的语音识别服务，并在结果首行写明目的地；技能正文和 README 都写明了这一点，报告中也会重申。
+- `whisper` 改为最后手段：只在工具不可用、用户要求媒体留在本机，或工具调用失败时使用。
+- `scripts/prepare_video.sh` 新增 `--skip-whisper`，避免本机装的 Whisper 抢在工具之前运行。不加这个参数时行为不变，没有该工具的运行环境不受影响。
+- `scripts/prepare_video.sh` 现在会打印 `Media file` 路径。Windows 的 Git Bash 下，它打印的路径和清单里的 `video` 项都经 `cygpath -w` 转成原生形式，因为 shell 之外的文件工具打不开 `/tmp/...` 这样的 MSYS 路径。
+
 ## 1.1.4 — 2026-10-30
 
 - Removed `internet` from `requires.connections`. That field names credentials to inject into script environments; it does not mean the skill needs network access. DesireCore looked up a credential called `internet` on every Bash call, found none, and appended a "credential not injected" notice to the command output, which led agents to report a missing network credential. The skill needs no credentials, and URL inputs still reach the network through `yt-dlp`.
