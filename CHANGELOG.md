@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.2.1 — 2026-11-01
+
+- The description, marketplace text, step 4, and READMEs now disclose that audio may go to the speech recognition service the user configured, under that provider's terms and fees, and name the fallbacks.
+- Step 4 now tells the agent to say when there is no transcript and not to guess what was said.
+
+中文：
+
+- 描述、市场简介、第 4 步和 README 写明：音频可能发送到用户配置的语音识别服务，条款和费用以服务商为准，并写明回退方式。
+- 第 4 步要求没有转写时如实说明，不要猜测视频里说了什么。
+
 ## 1.2.0 — 2026-11-01
 
 - When there are no subtitles, the skill now transcribes speech with the runtime's `TranscribeAudio` tool. The agent loads it with `DiscoverTools` when it is not already declared. Most users do not have the `whisper` CLI, so without this the agent could only read text visible in the frames. The tool sends the audio to the speech recognition service the user selected and names that destination on the first line of its result; the skill body and the README now say so, and the report repeats it.

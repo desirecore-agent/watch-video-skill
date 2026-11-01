@@ -6,8 +6,11 @@ description: >-
   scene-change frame extraction. Use when a user invokes /watch, asks to watch,
   summarize, transcribe, or review a video, or needs details that appear on
   screen but are absent from the audio. Also triggers for Russian requests such
-  as "посмотри видео", "разбери ролик", and "что показано на экране".
-version: 1.2.0
+  as "посмотри видео", "разбери ролик", and "что показано на экране". Without
+  subtitles, audio may go to the speech recognition service the user configured,
+  under that provider's terms and fees; local Whisper and a visual-only review
+  are the fallbacks.
+version: 1.2.1
 type: procedural
 risk_level: medium
 status: enabled
@@ -37,22 +40,22 @@ metadata:
       - en-US
     zh-CN:
       name: 视频观看与场景分析
-      short_desc: 结合字幕、语音转写与场景变化帧分析视频中的语音和画面
+      short_desc: 结合字幕、语音转写与场景变化帧分析视频中的语音和画面。没有字幕时，音频可能发送到你配置的语音识别服务，条款和费用以服务商为准。
       description: >-
-        通过字幕或语音转写、场景变化帧和时间戳索引，同时分析视频的音频与画面；适用于视频总结、演示复盘、幻灯片/界面/代码审阅，以及发现音频没有说明的屏幕信息。
+        通过字幕或语音转写、场景变化帧和时间戳索引，同时分析视频的音频与画面；适用于视频总结、演示复盘、幻灯片/界面/代码审阅，以及发现音频没有说明的屏幕信息。没有字幕时，音频可能发送到你配置的语音识别服务，条款和费用以服务商为准；也可回退到本地 Whisper 或纯视觉审阅。
       body: ./SKILL.zh-CN.md
       translated_by: human
     en-US:
       name: Watch Video
-      short_desc: Analyze video speech and scene changes together
+      short_desc: Analyze video speech and scene changes together. Without subtitles, audio may go to the speech recognition service you configured, under that provider's terms and fees.
       description: >-
-        Combine subtitles or speech transcription with scene-change frames and timestamp indexing to analyze both what a video says and what it shows.
+        Combine subtitles or speech transcription with scene-change frames and timestamp indexing to analyze both what a video says and what it shows. Without subtitles, audio may go to the speech recognition service you configured, under that provider's terms and fees; local Whisper and a visual-only review are the fallbacks.
       body: ./SKILL.md
       translated_by: human
 market:
   icon: >-
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" stroke="#2563EB" stroke-width="1.7"/><path d="m10 9 5 3-5 3V9Z" fill="#2563EB"/><path d="M3 17h18" stroke="#2563EB" stroke-width="1.7" stroke-linecap="round"/><path d="M7 3v2m10-2v2" stroke="#2563EB" stroke-width="1.7" stroke-linecap="round"/></svg>
-  short_desc: Analyze video speech and scene changes together
+  short_desc: Analyze video speech and scene changes together. Without subtitles, audio may go to the speech recognition service you configured, under that provider's terms and fees.
   category: media
   channel: latest
   maintainer:
@@ -180,6 +183,8 @@ not ask to keep the media on this machine, call it with `path` set to the
   as their default model, which may be in the cloud, and the first line of the
   result names the actual destination. The user's selection covers this, so no
   extra confirmation is needed.
+- The service is not part of this skill. The user configures it separately, and
+  its terms and any fees come from the provider.
 - Each transcript line starts with a timestamp measured from the start of the
   file: `[mm:ss]`, or `[h:mm:ss]` past one hour.
 - `language` accepts `auto`, `zh`, or `en`, and defaults to automatic detection.
@@ -201,7 +206,8 @@ Without `whisper`, continue with a visual-only review.
 When `TranscribeAudio` is unavailable or the user asked to keep the media on this
 machine, the script has already tried Whisper. If that left no transcript, continue
 with a visual-only review and tell the user what a transcript would need: a default
-speech recognition model in the runtime, or a local Whisper install.
+speech recognition model in the runtime, or a local Whisper install. Without a
+transcript, say so in the report and do not guess what was said.
 
 ### 5. Analyze audio and visuals
 

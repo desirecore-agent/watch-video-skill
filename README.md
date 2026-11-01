@@ -140,7 +140,8 @@ Run `skills/watch/scripts/prepare_video.sh --help` for tuning options.
   directory.
 - The scripts do not upload media or analytics. When the agent uses
   `TranscribeAudio`, the runtime sends the audio to the speech recognition service
-  the user selected and names that service in the result.
+  the user selected and names that service in the result. The user configures that
+  service separately, and its terms and any fees come from the provider.
 - Review temporary files before deleting or retaining them.
 - Do not attach private videos, transcripts, cookies, or tokens to public bug
   reports.
