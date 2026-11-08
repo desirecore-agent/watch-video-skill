@@ -13,6 +13,11 @@ SCRIPTS = ROOT / "skills/watch/scripts"
 CHECK = SCRIPTS / "check_dependencies.sh"
 PREPARE = SCRIPTS / "prepare_video.sh"
 BASH = shutil.which("bash") or "/bin/bash"
+if os.name == "nt":
+    # Git's bin/bash launcher prepends real commands ahead of the test stubs.
+    native_bash = Path(BASH).parent.parent / "usr/bin/bash.exe"
+    if native_bash.is_file():
+        BASH = str(native_bash)
 
 
 class CheckDependenciesTests(unittest.TestCase):
@@ -39,15 +44,20 @@ class CheckDependenciesTests(unittest.TestCase):
         uname.write_text(f"#!/bin/sh\necho {system}\n", encoding="utf-8")
         uname.chmod(0o755)
         for name in tools or []:
-            target = shutil.which(name)
+            target = BASH if name == "bash" else shutil.which(name)
             self.assertIsNotNone(target, f"{name} is required to run this test")
             os.symlink(target, bin_dir / name)
         return str(bin_dir)
 
     def run_script(self, script: Path, args: list[str], path: str) -> subprocess.CompletedProcess[str]:
+        environment = os.environ.copy()
+        if os.name == "nt":
+            # MSYS command DLLs stay available after the isolated stubs.
+            path += os.pathsep + str(Path(BASH).parent)
+        environment["PATH"] = path
         return subprocess.run(
             [BASH, str(script), *args],
-            env={"PATH": path},
+            env=environment,
             capture_output=True,
             text=True,
             check=False,
@@ -100,6 +110,12 @@ class CheckDependenciesTests(unittest.TestCase):
         self.assertIn("missing  yt-dlp (required)", result.stdout)
         self.assertNotIn("Attempting subtitles", result.stdout)
 
+    def test_existing_python_placeholder_is_reported_missing(self) -> None:
+        path = self.make_path(["ffmpeg", "ffprobe"], scripts={"python3": "exit 49"})
+        result = self.run_script(CHECK, ["--local"], path)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("missing  python3 (required)", result.stdout)
+
     def test_missing_whisper_is_optional_and_names_the_transcription_tool(self) -> None:
         path = self.make_path(["ffmpeg", "ffprobe", "python3"])
         result = self.run_script(CHECK, ["--local"], path)
@@ -111,7 +127,7 @@ class CheckDependenciesTests(unittest.TestCase):
         """Prepares a local file with stub media tools and returns the manifest text."""
         path = self.make_path(
             ["ffmpeg", "python3"],
-            tools=["bash", "dirname", "mkdir", "find", "grep", "cp"],
+            tools=["bash", "dirname", "mkdir", "find", "grep", "cp", "rm", "rmdir"],
             scripts={"ffprobe": "echo 0", **scripts},
         )
         with tempfile.TemporaryDirectory() as work_dir:
@@ -146,7 +162,7 @@ class CheckDependenciesTests(unittest.TestCase):
         self.assertIn(f"video={media_lines[0].removeprefix('Media file: ')}", manifest)
 
     def test_prepare_prints_native_paths_when_cygpath_exists(self) -> None:
-        result, manifest = self.prepare_local_video(["--skip-whisper"], {"cygpath": "printf 'C:\\\\win%s\\n' \"$2\""})
+        result, manifest = self.prepare_local_video(["--skip-whisper"], {"cygpath": "printf 'C:\\\\win/%s\\n' \"$2\""})
         for label in ("Prepared video in", "Media file", "Review frames", "Timestamp index"):
             self.assertRegex(result.stdout, rf"(?m)^{label}: C:\\win/")
         self.assertRegex(manifest, r"(?m)^video=C:\\win/")

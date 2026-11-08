@@ -10,7 +10,7 @@ description: >-
   subtitles, audio may go to the speech recognition service the user configured,
   under that provider's terms and fees; local Whisper and a visual-only review
   are the fallbacks.
-version: 1.2.1
+version: 1.3.0
 type: procedural
 risk_level: medium
 status: enabled
@@ -31,7 +31,7 @@ requires:
     - python3
 metadata:
   author: DesireCore Agent
-  updated_at: '2026-11-01'
+  updated_at: '2026-11-08'
   i18n:
     default_locale: en-US
     source_locale: en-US
@@ -152,6 +152,11 @@ Useful options:
 - `--languages "ru,en"` sets preferred subtitle languages.
 - `--scene-threshold 0.30` controls scene sensitivity; use 0.20–0.40.
 - `--max-frames 150` caps the review set.
+- `--start-sec` and `--end-sec` restrict visual extraction to a source interval.
+- `--sample-interval 0.1` samples a chosen interval every 0.1 seconds. The default
+  preview combines the first frame, up to 24 evenly spaced samples, and scene
+  changes. If an explicit interval exceeds the frame budget, shorten the range,
+  increase the interval, or increase `--max-frames`.
 - `--whisper-model small` selects the Whisper fallback model.
 - `--whisper-language auto` enables language detection.
 
@@ -160,10 +165,16 @@ status, and writes:
 
 - `transcript.srt` when subtitles or Whisper output are available;
 - `video.*` for downloaded media;
-- `frames/` with all detected scene changes;
+- `frames/` with the bounded extracted preview;
 - `frames-selected/` with the bounded review set;
 - `scene_index.csv` mapping frames to timestamps;
+- `coverage.json` with the requested range, candidate count, selected count, and
+  whether the frame budget reduced the candidate set;
 - `manifest.txt` with preparation status.
+
+Use a working directory reserved for generated outputs. Each successful run
+replaces its frame sets and index. Concurrent runs need separate directories.
+Read `manifest.txt` only after the command succeeds.
 
 If the script stops at the dependency check, return to step 2; a missing
 program is not a platform limitation. If the script cannot download a supported
@@ -213,12 +224,30 @@ transcript, say so in the report and do not guess what was said.
 
 1. Read the transcript when there is one: `transcript.srt` or the
    `TranscribeAudio` result.
-2. Read `scene_index.csv`.
+2. Read `scene_index.csv` and `coverage.json`. The `seconds` column is the actual
+   decoded frame time relative to the source media start. `requested_seconds`
+   records the seek request. Use actual times, including for variable frame rates.
 3. Inspect every image in `frames-selected/` with vision.
 4. Connect visible slides, interfaces, code, charts, demos, edits, and b-roll to
    the nearest transcript timestamp.
 5. Distinguish direct observations from inferences.
 6. When OCR or a frame is ambiguous, say so instead of guessing.
+
+For a question about a brief event, a UI change, or an error message, inspect the
+preview first and then sample the relevant interval more densely. A sparse
+preview cannot establish that an event never occurred. For example:
+
+```bash
+scripts/prepare_video.sh --input "MEDIA_FILE" --workdir "$work_dir/detail" \
+  --start-sec 4 --end-sec 5 --sample-interval 0.1 --max-frames 20 --skip-whisper
+```
+
+Choose the interval from the user's question, transcript, and visible evidence.
+Expand it when the event is still unlocated. Reuse the source file and report
+the sampled range and remaining gaps. The helper uses PNG, `select`, `showinfo`,
+and the null muxer, including on minimal FFmpeg builds. Use these helpers for
+follow-up reads. An unrecognized FFmpeg output format requires another supported
+command. It does not establish that the source cannot be analyzed.
 
 If there is no transcript, perform a visual-only review and state the
 limitation. If frame extraction fails, provide a transcript-only summary and

@@ -11,16 +11,17 @@
 只做转写会遗漏画面证据。本 Skill 会：
 
 - 优先使用现有字幕；没有可用字幕时，用运行环境的 `TranscribeAudio` 工具转写语音（DesireCore 提供），没有该工具时回退到本地 Whisper；
-- 按场景变化提取帧，而不是只按固定时间采样；
+- 结合首帧、均匀预览采样与场景变化帧；
 - 创建帧与语音时间戳的索引；
-- 限制最终审阅帧数，同时保留视频开头和结尾；
+- 限制提取图片数量，支持对选定区间加密采样复查；
 - 要求 Agent 区分直接观察与推断；
 - 将媒体内容视为不可信输入，绝不绕过访问控制。
 
 ## 依赖
 
-- macOS、Linux，或通过 WSL 使用 Windows
+- macOS、Linux，或通过 Git Bash、WSL 使用 Windows
 - Bash 3.2 或更高版本
+- Python 3.9 或更高版本
 - URL 输入需要 [`yt-dlp`](https://github.com/yt-dlp/yt-dlp)；完整支持 YouTube 还推荐安装 [`deno`](https://deno.com/)
 - `ffmpeg` 和 `ffprobe`
 - 可选的 [`openai-whisper`](https://github.com/openai/whisper)，运行环境没有语音转写工具时用作转写回退
@@ -114,6 +115,18 @@ skills/watch/scripts/prepare_video.sh \
 ```
 
 运行 `skills/watch/scripts/prepare_video.sh --help` 查看可调参数。
+
+短暂事件可以先看预览，再缩小画面复查区间。
+
+```bash
+skills/watch/scripts/prepare_video.sh \
+  --input "/absolute/path/video.mp4" --workdir "/tmp/watch-detail" \
+  --start-sec 4 --end-sec 5 --sample-interval 0.1 --max-frames 20 --skip-whisper
+```
+
+索引记录实际解码时间与请求定位时间。`coverage.json` 记录选定区间和帧数预算导致的候选缩减。
+稀疏采样可能遗漏短暂事件。工作目录仅保存生成产物，成功重跑会替换帧集合与索引，并发运行使用独立目录。
+必需命令需要通过实际版本调用，Windows Store 的 Python 占位程序会被报告为缺失。
 
 ## 隐私与负责任使用
 

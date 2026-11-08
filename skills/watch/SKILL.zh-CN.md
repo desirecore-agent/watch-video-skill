@@ -57,6 +57,8 @@ scripts/prepare_video.sh --input "/absolute/path/video.mp4" --workdir "$work_dir
 - `--languages "ru,en"`：字幕语言优先级。
 - `--scene-threshold 0.30`：场景敏感度，通常使用 0.20–0.40。
 - `--max-frames 150`：限制最终需要审阅的帧数。
+- `--start-sec`、`--end-sec` 指定画面提取的原视频时间区间。
+- `--sample-interval 0.1` 每隔 0.1 秒采样。默认预览结合首帧、最多 24 个均匀采样点和场景变化。显式间隔超过帧数预算时，缩短区间、增大间隔或提高 `--max-frames`。
 - `--whisper-model small`：选择 Whisper 回退模型。
 - `--whisper-language auto`：启用语言自动识别。
 
@@ -64,10 +66,13 @@ scripts/prepare_video.sh --input "/absolute/path/video.mp4" --workdir "$work_dir
 
 - `transcript.srt`：字幕或 Whisper 转写；
 - `video.*`：下载的视频；
-- `frames/`：检测到的场景变化帧；
+- `frames/`：按预算提取的预览帧；
 - `frames-selected/`：经过上限控制的审阅帧；
 - `scene_index.csv`：帧与时间戳的映射；
+- `coverage.json` 记录请求区间、候选数、选帧数和帧数预算是否缩减了候选集合；
 - `manifest.txt`：准备状态。
+
+工作目录应专门保存生成产物。每次成功运行都会替换帧集合与索引，并发运行使用独立目录。命令成功后再读取 `manifest.txt`。
 
 如果脚本停在依赖检查，回到第 2 步处理；缺少程序不属于平台限制。如果支持的 URL 无法下载，解释平台限制并请用户提供有权使用的本地文件。不得编造转写或画面观察。
 
@@ -96,11 +101,20 @@ scripts/prepare_video.sh --input "MEDIA_FILE" --workdir "$work_dir"
 ### 5. 分析音频与画面
 
 1. 有转写时先阅读它：`transcript.srt` 或 `TranscribeAudio` 的结果。
-2. 阅读 `scene_index.csv`。
+2. 阅读 `scene_index.csv` 和 `coverage.json`。`seconds` 是相对原媒体起点的实际解码帧时间，`requested_seconds` 记录请求的定位时间。可变帧率视频也使用实际时间。
 3. 使用视觉能力检查 `frames-selected/` 中的每一张图。
 4. 将幻灯片、界面、代码、图表、演示、剪辑和 B-roll 与最近的转写时间戳关联。
 5. 清楚区分直接观察和推断。
 6. OCR 或帧内容不清楚时说明不确定性，不要猜测。
+
+问题涉及短暂事件、界面变化或错误提示时，先检查预览，再加密采样相关区间。稀疏预览不能证明某事件从未出现。例如：
+
+```bash
+scripts/prepare_video.sh --input "MEDIA_FILE" --workdir "$work_dir/detail" \
+  --start-sec 4 --end-sec 5 --sample-interval 0.1 --max-frames 20 --skip-whisper
+```
+
+根据用户问题、转写和已看到的证据选择区间，仍未定位时扩大范围。复用源文件，报告实际采样区间和剩余盲区。辅助脚本使用 PNG、`select`、`showinfo` 和 null 输出格式，兼容相应精简 FFmpeg 构建。追问时继续使用这些辅助脚本；某个 FFmpeg 输出格式不可用时，改用受支持的命令后再判断来源能否分析。
 
 没有转写时进行纯视觉审阅并说明限制。帧提取失败时可以提供纯转写总结，但必须说明画面未经核验。
 
