@@ -1,5 +1,23 @@
 # Changelog
 
+## 1.3.0 — 2026-11-08
+
+- Combine the first frame, a bounded uniform preview, and scene changes. Add
+  time-range and sample-interval options for follow-up inspection.
+- Record actual decoded source timestamps and coverage. Replace frame sets on
+  successful reruns and invalidate prior success markers before preparing again.
+- Accept direct downloads with unknown height metadata and check that required
+  executables really start, including Windows Python placeholders.
+- Exercise real media, variable frame rates, nonzero source origins, repeat runs,
+  and budget errors. Repair Windows isolation in the dependency test harness.
+
+中文
+
+- 结合首帧、有界均匀预览与场景变化，增加时间区间和采样间隔参数用于复查。
+- 记录实际解码时间戳与覆盖范围，成功重跑替换帧集合，准备前使旧成功标记失效。
+- 支持缺少分辨率元数据的直链下载，确认必需命令能实际启动，识别 Windows Python 占位程序。
+- 回归覆盖真实媒体、可变帧率、非零时间起点、重复运行和预算错误，并修复依赖自测的 Windows 隔离。
+
 ## 1.2.1 — 2026-11-01
 
 - The description, marketplace text, step 4, and READMEs now disclose that audio may go to the speech recognition service the user configured, under that provider's terms and fees, and name the fallbacks.

@@ -19,15 +19,15 @@ Transcript-only summaries miss visual evidence. This skill:
 - prefers existing subtitles, then transcribes speech with the runtime's
   `TranscribeAudio` tool when it has one (DesireCore), and otherwise falls back to
   local Whisper;
-- extracts frames when scenes change instead of sampling on a fixed timer;
+- combines the first frame, evenly spaced preview samples, and scene changes;
 - creates a timestamp index for matching frames to speech;
-- caps the visual review set without losing the beginning or end;
+- caps extracted images and supports dense follow-up reads of a chosen interval;
 - tells the agent to separate observations from inferences;
 - treats media contents as untrusted input and never bypasses access controls.
 
 ## Requirements
 
-- macOS, Linux, or Windows through WSL
+- macOS, Linux, or Windows through Git Bash or WSL
 - Bash 3.2 or newer
 - Python 3.9 or newer
 - [`yt-dlp`](https://github.com/yt-dlp/yt-dlp) for URL inputs, plus
@@ -131,6 +131,21 @@ skills/watch/scripts/prepare_video.sh \
 ```
 
 Run `skills/watch/scripts/prepare_video.sh --help` for tuning options.
+
+For a brief event, inspect the preview and then narrow the visual interval:
+
+```bash
+skills/watch/scripts/prepare_video.sh \
+  --input "/absolute/path/video.mp4" --workdir "/tmp/watch-detail" \
+  --start-sec 4 --end-sec 5 --sample-interval 0.1 --max-frames 20 --skip-whisper
+```
+
+The index records actual decoded source timestamps and requested seek times.
+`coverage.json` records the selected interval and any reduction caused by the
+frame budget. Sparse samples can miss brief events. Use generated-output-only
+working directories. Successful reruns replace the frame sets and index, and
+concurrent runs need separate directories. Required commands must pass a version
+invocation, so a Windows Store Python placeholder is reported as missing.
 
 ## Privacy and responsible use
 

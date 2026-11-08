@@ -18,6 +18,13 @@ jobs:
       - name: Validate public package
         run: python3 scripts/validate_public.py
 
+      - name: Ensure media regression dependencies
+        run: |
+          if ! command -v ffmpeg >/dev/null || ! command -v ffprobe >/dev/null; then
+            sudo apt-get update
+            sudo apt-get install -y ffmpeg
+          fi
+
       - name: Run scene-index tests
         run: python3 -m unittest discover -s tests -p 'test_*.py'
 

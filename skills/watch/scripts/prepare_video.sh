@@ -11,6 +11,9 @@ max_frames="150"
 whisper_model="small"
 whisper_language="auto"
 skip_whisper="false"
+start_sec="0"
+end_sec=""
+sample_interval=""
 
 usage() {
   cat <<'EOF'
@@ -23,6 +26,10 @@ Options:
   --languages LIST           Subtitle language priority (default: ru,en)
   --scene-threshold NUMBER   ffmpeg scene threshold from 0 to 1 (default: 0.30)
   --max-frames NUMBER        Maximum selected frames (default: 150)
+  --start-sec NUMBER         Start the visual review at this source time
+  --end-sec NUMBER           Stop the visual review before this source time
+  --sample-interval NUMBER   Seconds between preview frames in the selected range
+                            (default: up to 24 evenly spaced preview frames)
   --whisper-model NAME       Whisper fallback model (default: small)
   --whisper-language CODE    Language code or auto (default: auto)
   --skip-whisper             Leave a missing transcript to the runtime's
@@ -78,6 +85,21 @@ while [ "$#" -gt 0 ]; do
       max_frames="$2"
       shift
       ;;
+    --start-sec)
+      require_value "$@"
+      start_sec="$2"
+      shift
+      ;;
+    --end-sec)
+      require_value "$@"
+      end_sec="$2"
+      shift
+      ;;
+    --sample-interval)
+      require_value "$@"
+      sample_interval="$2"
+      shift
+      ;;
     --whisper-model)
       require_value "$@"
       whisper_model="$2"
@@ -130,7 +152,7 @@ esac
 if [ -z "$work_dir" ]; then
   work_dir="$(mktemp -d "${TMPDIR:-/tmp}/watch.XXXXXX")"
 fi
-mkdir -p "$work_dir/frames" "$work_dir/frames-selected"
+mkdir -p "$work_dir"
 
 if [ -n "$input_url" ]; then
   "$script_dir/check_dependencies.sh" --url
@@ -138,10 +160,25 @@ else
   "$script_dir/check_dependencies.sh" --local
 fi
 
+lock_dir="$work_dir/.watch-preparing"
+if ! mkdir "$lock_dir" 2>/dev/null; then
+  printf 'This work directory is already being prepared. Use a separate directory; after an interrupted run, check its owner before removing .watch-preparing.\n' >&2
+  exit 1
+fi
+trap 'rmdir "$lock_dir" 2>/dev/null || true' EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+# An interrupted attempt must not leave a successful index from an older run.
+rm -f "$work_dir/manifest.txt" "$work_dir/scene_index.csv" "$work_dir/coverage.json" \
+  "$work_dir/transcript.srt" "$work_dir/audio.srt"
+
 transcript_status="unavailable"
 video_path=""
 
 if [ -n "$input_url" ]; then
+  for generated in "$work_dir"/video.* "$work_dir"/subtitles*.srt; do
+    if [ -f "$generated" ]; then rm -f "$generated"; fi
+  done
   printf 'Attempting subtitles...\n'
   if yt-dlp \
     --no-playlist \
@@ -168,7 +205,7 @@ if [ -n "$input_url" ]; then
   printf 'Downloading video...\n'
   yt-dlp \
     --no-playlist \
-    -f "bv*[height<=720]+ba/b[height<=720]" \
+    -f "bv*[height<=?720]+ba/b[height<=?720]" \
     --merge-output-format mp4 \
     -o "$work_dir/video.%(ext)s" \
     -- "$input_url"
@@ -246,35 +283,12 @@ if [ "$transcript_status" = "unavailable" ]; then
   fi
 fi
 
-printf 'Extracting scene-change frames...\n'
-ffmpeg \
-  -hide_banner \
-  -nostdin \
-  -y \
-  -i "$video_path" \
-  -vf "select='gt(scene,${scene_threshold})',showinfo" \
-  -fps_mode vfr \
-  "$work_dir/frames/frame_%06d.png" \
-  2> "$work_dir/scenes.log"
-
-if ! find "$work_dir/frames" -type f -name 'frame_*.png' -print -quit | grep -q .; then
-  printf 'No scene changes detected; extracting the first frame.\n'
-  ffmpeg \
-    -hide_banner \
-    -nostdin \
-    -y \
-    -i "$video_path" \
-    -frames:v 1 \
-    "$work_dir/frames/frame_000001.png" \
-    >/dev/null 2>&1
-fi
-
-python3 "$script_dir/scene_index.py" \
-  --log "$work_dir/scenes.log" \
-  --frames "$work_dir/frames" \
-  --selected "$work_dir/frames-selected" \
-  --output "$work_dir/scene_index.csv" \
-  --max-frames "$max_frames"
+printf 'Extracting preview and scene-change frames...\n'
+frame_args=(--video "$(native_path "$video_path")" --workdir "$(native_path "$work_dir")"
+  --scene-threshold "$scene_threshold" --max-frames "$max_frames" --start-sec "$start_sec")
+if [ -n "$end_sec" ]; then frame_args+=(--end-sec "$end_sec"); fi
+if [ -n "$sample_interval" ]; then frame_args+=(--sample-interval "$sample_interval"); fi
+python3 "$(native_path "$script_dir/prepare_frames.py")" "${frame_args[@]}"
 
 {
   printf 'transcript=%s\n' "$transcript_status"
@@ -288,3 +302,4 @@ printf 'Media file: %s\n' "$(native_path "$video_path")"
 printf 'Transcript status: %s\n' "$transcript_status"
 printf 'Review frames: %s\n' "$(native_path "$work_dir/frames-selected")"
 printf 'Timestamp index: %s\n' "$(native_path "$work_dir/scene_index.csv")"
+printf 'Coverage: %s\n' "$(native_path "$work_dir/coverage.json")"

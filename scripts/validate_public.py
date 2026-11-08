@@ -21,6 +21,7 @@ REQUIRED_FILES = [
     ROOT / "skills/watch/scripts/check_dependencies.sh",
     ROOT / "skills/watch/scripts/prepare_video.sh",
     ROOT / "skills/watch/scripts/scene_index.py",
+    ROOT / "skills/watch/scripts/prepare_frames.py",
     ROOT / "tests/test_scene_index.py",
 ]
 TEXT_SUFFIXES = {

@@ -44,7 +44,9 @@ missing_recommended=""
 check_command() {
   command_name="$1"
   requirement="$2"
-  if command -v "$command_name" >/dev/null 2>&1; then
+  version_flag="${3:-}"
+  if command -v "$command_name" >/dev/null 2>&1 &&
+    { [ -z "$version_flag" ] || "$command_name" "$version_flag" >/dev/null 2>&1; }; then
     printf 'ok       %s\n' "$command_name"
   elif [ "$requirement" = "required" ]; then
     printf 'missing  %s (required)\n' "$command_name"
@@ -139,11 +141,11 @@ print_install_hint() {
 }
 
 if [ "$mode" = "url" ]; then
-  check_command yt-dlp required
+  check_command yt-dlp required --version
 fi
-check_command ffmpeg required
-check_command ffprobe required
-check_command python3 required
+check_command ffmpeg required -version
+check_command ffprobe required -version
+check_command python3 required --version
 
 if [ "$require_whisper" = "true" ]; then
   check_command whisper required
